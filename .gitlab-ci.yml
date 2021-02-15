@@ -1,0 +1,100 @@
+variables:
+  VARS_FILE: .variables
+
+stages:
+  - prepare
+  - test
+  - build
+  - rpmbuild
+  - deploy-to-dev
+  - deploy-to-prod
+
+preparing:
+  stage: prepare
+  script:
+  - echo "export APP_VER=$(date +'%Y%m%d%H%M%S')" > $VARS_FILE
+  - echo "export APP_REL=$CI_COMMIT_SHORT_SHA" >> $VARS_FILE
+  - echo "export APP_NAME=$CI_PROJECT_NAME" >> $VARS_FILE
+  - source $VARS_FILE
+  - echo "Packge name is '$APP_NAME-$APP_VER-$APP_REL'"
+  artifacts:
+    paths: 
+    - $VARS_FILE
+  
+format:
+  stage: test
+  script:
+  - source $VARS_FILE
+  - echo "Packge name is '$APP_NAME-$APP_VER-$APP_REL'"
+  - make isort
+  artifacts:
+    paths: 
+    - $VARS_FILE
+  needs:
+  - job: preparing
+    artifacts: true
+
+#compile:
+#  stage: build
+#  script:
+#  - source /.variables
+#  - go build -race -ldflags "-extldflags '-static'" -o $APP_NAME
+#  - ls -la $APP_NAME
+#  #artifacts:
+#  #  paths: 
+#  #  - $APP_NAME
+
+package:
+  stage: rpmbuild
+  when: manual
+  #dependencies:
+  #- preparing
+  #- compile
+  #- format
+  variables:
+    SPEC_FILE: /data/rpmbuild/default-py-app-pillow.spec
+  script:
+  - source $VARS_FILE
+  - echo "Packge name is '$APP_NAME-$APP_VER-$APP_REL'"
+  - yum -y install python3-pillow
+  - rpmbuild -bb --define "_app $APP_NAME" --define "_ver $APP_VER" --define "_rel $APP_REL" $SPEC_FILE
+  - 'find x86_64/*.rpm | while read f; do echo File: $f; 2repo $f; done'
+  artifacts:
+    paths: 
+    - $VARS_FILE
+  needs:
+  - job: format
+    artifacts: true
+
+    
+deploy-to-dev:
+  stage: deploy-to-dev
+  #when: manual
+  #dependencies:
+  #- package
+  script:
+  - source $VARS_FILE
+  - echo "Packge name is '$APP_NAME-$APP_VER-$APP_REL'"
+  - curl -X POST -F token=9acb060921c156dab43f8cc328571b -F "variables[deployId]=aa57e3ec772992ab9d369d2ce32b990d" -F "variables[ver]=$APP_VER-$APP_REL" -F ref=master https://gitlab.com/api/v4/projects/19709744/trigger/pipeline
+  artifacts:
+    paths: 
+    - $VARS_FILE
+  needs:
+  - job: package
+    artifacts: true
+  
+deploy-to-prod:
+  stage: deploy-to-prod
+  when: manual
+  #dependencies:
+  #- deploy-to-dev
+  script:
+  - source $VARS_FILE
+  - echo "Packge name is '$APP_NAME-$APP_VER-$APP_REL'"
+  - curl -X POST -F token=9acb060921c156dab43f8cc328571b -F "variables[deployId]=bdd94ad1966f5d50bc8a904a8f02b741" -F "variables[ver]=$APP_VER-$APP_REL" -F ref=master https://gitlab.com/api/v4/projects/19709744/trigger/pipeline  
+  artifacts:
+    paths: 
+    - $VARS_FILE
+  needs:
+  - job: deploy-to-dev
+    artifacts: true

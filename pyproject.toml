@@ -1,0 +1,40 @@
+[tool.poetry]
+name = "python-tg-textimagebot"
+version = "0.1.0"
+description = "Developed by The Forge"
+authors = ["Your Name <you@example.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+aiogram = "2.9.2"
+aiohttp = "3.6.2"
+aiosqlite = "0.15.0"
+asgiref = "3.2.10"
+async-timeout = "3.0.1"
+asyncpg = "^0.21.0"
+attrs = "19.3.0"
+Babel = "2.8.0"
+certifi = "2020.6.20"
+chardet = "3.0.4"
+idna = "2.10"
+iso8601 = "0.1.12"
+multidict = "4.7.6"
+Pillow = "7.2.0"
+PyPika = "0.37.16"
+pytz = "2020.1"
+sqlparse = "0.3.1"
+tortoise-orm = "0.16.14"
+typing-extensions = '3.7.4.2'
+yarl = "1.4.2"
+envparse = "^0.2.0"
+
+
+[tool.poetry.dev-dependencies]
+black = "^19.10b0"
+flake8 = "^3.8.3"
+isort = "^5.0.3"
+pipreqs = "^0.4.10"
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
